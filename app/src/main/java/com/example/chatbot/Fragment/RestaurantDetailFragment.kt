@@ -102,12 +102,19 @@ class RestaurantDetailFragment : Fragment() {
                 val b = Bundle()
                 b.putString("RDetailtoImage", data)
 
+
+
                 val fragment = ImageDetailFragment()
                 fragment.arguments = b
                 fragmentTransaction.add(R.id.container, fragment, fragment.javaClass.name)
-
+//                fragmentTransaction.replace(R.id.container, fragment, fragment.javaClass.name)
                 fragmentTransaction.addToBackStack(fragment.javaClass.name)
                 fragmentTransaction.commit()
+
+//                val currentFragment = requireActivity().supportFragmentManager.findFragmentById(R.id.container)
+//                if (currentFragment != null) {
+//                    fragmentTransaction.hide(currentFragment)
+//                }
             }
 
 

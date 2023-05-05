@@ -9,6 +9,7 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentManager
 import androidx.fragment.app.FragmentTransaction
 import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.viewpager2.widget.ViewPager2
 import com.example.chatbot.Adapter.NestedData
 import com.example.chatbot.Adapter.RestaurantListAdapter
 import com.example.chatbot.BuildConfig
@@ -83,6 +84,12 @@ class ThirdFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
         initRv() //RecyclerView初始化
         SearchShop()
+//        initcomment()
+
+    }
+
+    private fun initcomment() {
+        TODO("Not yet implemented")
 
     }
 

@@ -4,6 +4,7 @@ import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.ViewGroup
+import android.widget.ImageView
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -34,6 +35,9 @@ class NestedImageAdapter(var photoList: List<String>) :  //只需要MsgList的im
 
     override fun onBindViewHolder(holder: ItemViewHolder, position: Int) {
         val photoUrl = photoList[position]
+
+        holder.binding.imgNested.setScaleType(ImageView.ScaleType.CENTER_CROP)
+
 
         Picasso.get().load(photoUrl).into(holder.binding.imgNested)
 

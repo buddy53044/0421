@@ -32,12 +32,13 @@ import java.util.*
 import kotlin.collections.ArrayList
 
 private val binding get() = _binding!!
-private var _binding : FragmentFirstBinding? = null
+private var _binding: FragmentFirstBinding? = null
 private lateinit var msgAdapter: MsgAdapter
 private const val SPEECH_REQUEST_CODE = 0
-private var answer:String ="發送訊息以獲得回覆"
+private var answer: String = "發送訊息以獲得回覆"
 private var msgList: MutableList<Msg> = ArrayList()//建立可改變的list
 private var tts: TextToSpeech? = null
+
 class OpenAIFragment : Fragment() {
 
 
@@ -47,7 +48,7 @@ class OpenAIFragment : Fragment() {
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        _binding = FragmentFirstBinding.inflate(inflater,container,false)
+        _binding = FragmentFirstBinding.inflate(inflater, container, false)
         // Inflate the layout for this fragment
         return binding.root
     }
@@ -56,6 +57,7 @@ class OpenAIFragment : Fragment() {
         super.onDestroyView()
         _binding = null;
     }
+
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         initRv() //RecyclerView初始化
@@ -63,47 +65,14 @@ class OpenAIFragment : Fragment() {
         setListener()//發送訊息與ai對話
         textToSpeech() //文字轉語音
     }
-    private fun setListener() {
-        binding.run {
-            sendButton.setOnClickListener {
-                val message = editText.text.toString()
-                if (message.isNotEmpty()) {
-                    editText.setText("")
-                    // 定義要傳送的資料
-                    val reqMessage = com.example.chatbot.OpenAI.Messages(role = "user", content = message)
-                    // 加入到傳送用的資料列表
-                    sendMessages.add(reqMessage)
-                    // 加入到顯示用的資料列表
-                    currentMessages.add(reqMessage)
-                    // 先刷新列表
-                    msgAdapter.setterData(currentMessages)
-                    recyclerView.scrollToPosition(currentMessages.size - 1)
-                    // 呼叫API
-                    Apiclient.openAI.sendChatGPT(com.example.chatbot.OpenAI.ChatGPTReq(messages = sendMessages)).enqueue(object :
-                        Callback<com.example.chatbot.OpenAI.ChatGPTRes> {
-                        override fun onResponse(call: Call<com.example.chatbot.OpenAI.ChatGPTRes>, response: Response<com.example.chatbot.OpenAI.ChatGPTRes>) {
-                            response.body()?.let { res ->
-                                // 先儲存回傳的資料
-                                res.choices.forEach { currentMessages.add(it.message) }
-                                // 再儲存下次要傳送的資料
-                                sendMessages.addAll(currentMessages)
-                                // 刷新列表
-                                msgAdapter.setterData(currentMessages)
-                                CoroutineScope(Dispatchers.Main).launch {
-                                    recyclerView.scrollToPosition(currentMessages.size - 1)
-                                }
-                            }
-                        }
 
-                        override fun onFailure(call: Call<com.example.chatbot.OpenAI.ChatGPTRes>, t: Throwable) {
-                            t.printStackTrace()
-                            Method.logE(TAG, "onFailure: ${t.message}")
-                        }
-                    })
-                }
+    private fun setListener() {
+        binding.sendButton.setOnClickListener {
+            val message = editText.text.toString()
+            sendMessage(message)
         }
     }
-}
+
     private fun initRv() {
         binding.recyclerView.apply {
             msgAdapter = MsgAdapter(msgList)   //建立适配器实例
@@ -115,15 +84,19 @@ class OpenAIFragment : Fragment() {
             adapter = msgAdapter
         }
     }
+
     fun View.hideKeyboard() {
         val imm = context.getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
         imm.hideSoftInputFromWindow(windowToken, 0)
     }//打完字自動把鍵盤收起來
 
     private fun displaySpeechRecognizer() {
-        voice_button.setOnClickListener{
+        voice_button.setOnClickListener {
             val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
-                putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
+                putExtra(
+                    RecognizerIntent.EXTRA_LANGUAGE_MODEL,
+                    RecognizerIntent.LANGUAGE_MODEL_FREE_FORM
+                )
             }
             // This starts the activity and populates the intent with the speech text.
             startActivityForResult(intent, SPEECH_REQUEST_CODE)
@@ -133,9 +106,10 @@ class OpenAIFragment : Fragment() {
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         if (requestCode == SPEECH_REQUEST_CODE && resultCode == Activity.RESULT_OK) {
-            val spokenText: String = data?.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS)?.let { results ->
-                results[0]
-            }.toString()
+            val spokenText: String =
+                data?.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS)?.let { results ->
+                    results[0]
+                }.toString()
             binding.editText.setText(spokenText)
             // Do something with spokenText.
         }
@@ -168,6 +142,53 @@ class OpenAIFragment : Fragment() {
             }
         }
         tts!!.shutdown()   //釋放資源?
+    }
+
+    private fun sendMessage(message: String) {
+        binding.run {
+            if (message.isNotEmpty()) {
+                editText.setText("")
+                // 定義要傳送的資料
+                val reqMessage =
+                    com.example.chatbot.OpenAI.Messages(role = "user", content = message)
+                // 加入到傳送用的資料列表
+                sendMessages.add(reqMessage)
+                // 加入到顯示用的資料列表
+                currentMessages.add(reqMessage)
+                // 先刷新列表
+                msgAdapter.setterData(currentMessages)
+                recyclerView.scrollToPosition(currentMessages.size - 1)
+                // 呼叫API
+                Apiclient.openAI.sendChatGPT(com.example.chatbot.OpenAI.ChatGPTReq(messages = sendMessages))
+                    .enqueue(object :
+                        Callback<com.example.chatbot.OpenAI.ChatGPTRes> {
+                        override fun onResponse(
+                            call: Call<com.example.chatbot.OpenAI.ChatGPTRes>,
+                            response: Response<com.example.chatbot.OpenAI.ChatGPTRes>
+                        ) {
+                            response.body()?.let { res ->
+                                // 先儲存回傳的資料
+                                res.choices.forEach { currentMessages.add(it.message) }
+                                // 再儲存下次要傳送的資料
+                                sendMessages.addAll(currentMessages)
+                                // 刷新列表
+                                msgAdapter.setterData(currentMessages)
+                                CoroutineScope(Dispatchers.Main).launch {
+                                    recyclerView.scrollToPosition(currentMessages.size - 1)
+                                }
+                            }
+                        }
+
+                        override fun onFailure(
+                            call: Call<com.example.chatbot.OpenAI.ChatGPTRes>,
+                            t: Throwable
+                        ) {
+                            t.printStackTrace()
+                            Method.logE(TAG, "onFailure: ${t.message}")
+                        }
+                    })
+            }
+        }
     }
 }
 
